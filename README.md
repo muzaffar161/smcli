@@ -1,21 +1,24 @@
 # SmCLI
+
 ![C++](https://img.shields.io/badge/language-C%2B%2B-blue)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
-
 ![Type](https://img.shields.io/badge/type-CLI%20Tool-purple)
 ![Beginner Friendly](https://img.shields.io/badge/good%20for-beginners-brightgreen)
 ![Design](https://img.shields.io/badge/design-simple-orange)
 ![Performance](https://img.shields.io/badge/performance-lightweight-yellow)
 ![Cross Platform](https://img.shields.io/badge/cross--platform-supported-success)
+
 ![GitHub stars](https://img.shields.io/github/stars/muzaffar161/smcli)
 ![GitHub forks](https://img.shields.io/github/forks/muzaffar161/smcli)
 ![GitHub issues](https://img.shields.io/github/issues/muzaffar161/smcli)
 
+A simple and lightweight cross-platform CLI tool for file management and directory exploration.
+
 
 SmCLI is a cross-platform command line tool written in C++ for file management, search, and directory visualization.
 
-It provides fast CLI utilities for copying, moving, searching files and displaying directory trees directly from the terminal.
+It provides fast CLI utilities for copying, moving, and searching files, as well as displaying directory trees directly from the terminal.
 
 Supports:
 - macOS
@@ -240,3 +243,13 @@ source /path/to/smcli-completion.sh
 ```
 
 You will need to replace `/path/to/smcli-completion.sh` with the actual path to the `smcli-completion.sh` file in this project.
+
+
+## Keywords
+
+cli tool  
+command line utility  
+cpp cli tool  
+file manager cli  
+terminal file search  
+cross platform cli
