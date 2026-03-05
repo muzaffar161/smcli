@@ -1,6 +1,6 @@
 # SmCLI
 
-A smart command-line interface.
+A smcli command-line interface.
 
 ## Project Structure
 
@@ -9,7 +9,6 @@ A smart command-line interface.
 - `include/`: Contains all the C++ header files (`.h`, `.hpp` files).
 - `completions/`: Contains shell completion scripts.
 - `dist/`: Contains installers and other distribution-related files.
-- `public/`: Contains public assets like images, etc.
 - `bin/`: Contains the compiled executable.
 
 ## Building
