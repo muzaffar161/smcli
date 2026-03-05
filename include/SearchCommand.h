@@ -10,7 +10,6 @@ public:
     void execute(const std::vector<std::string>& args) const;
 
 private:
-    // Helper to determine if a file matches image/video extensions
     bool isImageFile(const std::string& extension) const;
     bool isVideoFile(const std::string& extension) const;
 };

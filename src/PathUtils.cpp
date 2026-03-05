@@ -5,7 +5,7 @@
 
 namespace fs = std::filesystem;
 
-// Function to generate a new path for a file that already exists at the destination
+
 fs::path generate_new_path(const fs::path& destination_path) {
     if (!fs::exists(destination_path)) {
         return destination_path;
@@ -27,7 +27,7 @@ fs::path generate_new_path(const fs::path& destination_path) {
                 stem_base = stem.substr(0, pos);
                 copy_num++;
             } catch (const std::invalid_argument&) {
-                // Not a number, treat it as part of the name
+
             }
         } else if (potential_num.length() == 0) {
              stem_base = stem.substr(0, pos);

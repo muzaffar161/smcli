@@ -3,12 +3,11 @@
 #include <filesystem>
 #include <string>
 #include <vector>
-#include "PathUtils.h" // Include the new utility header
+#include "PathUtils.h" 
 
 namespace fs = std::filesystem;
 
 void MoveCommand::execute(const std::vector<std::string>& args) const {
-    // smcli move <path> to <path> [as <name>]
     if (args.size() < 3 || args[1] != "to") {
         std::cerr << "Usage: smcli move <source> to <destination> [as <new_name>]" << std::endl;
         return;
@@ -36,7 +35,7 @@ void MoveCommand::execute(const std::vector<std::string>& args) const {
             } else {
                 final_destination = destination_path / new_name;
             }
-        } else { // It's a file or doesn't exist, so parent is the directory
+        } else { 
              if (new_name.empty()) {
                 final_destination = destination_path;
              } else {
@@ -45,8 +44,8 @@ void MoveCommand::execute(const std::vector<std::string>& args) const {
         }
 
         if (fs::exists(final_destination)) {
-            if (new_name.empty()) { // Only do conflict resolution if a name wasn't explicitly provided
-                final_destination = generate_new_path(final_destination); // Use the utility function
+            if (new_name.empty()) {
+                final_destination = generate_new_path(final_destination); 
                 std::cout << "Destination '" << (destination_path / source_path.filename()) << "' already exists. Moving to '" << final_destination.filename() << "'." << std::endl;
             } else {
                  std::cerr << "Error: Destination '" << final_destination << "' already exists." << std::endl;

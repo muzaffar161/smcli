@@ -17,9 +17,9 @@ const std::string RED = "\033[31m";
 const std::string YELLOW = "\033[33m";
 const std::string CYAN = "\033[36m";
 const std::string GRAY = "\033[90m";
-const std::string HIGHLIGHT = "\033[43;30m"; // Yellow background, black text
+const std::string HIGHLIGHT = "\033[43;30m"; 
 
-// Helper to determine if a file matches common image extensions
+
 bool SearchCommand::isImageFile(const std::string& extension) const {
     static const std::set<std::string> imageExtensions = {
         ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".svg", ".heif", ".heic"
@@ -27,7 +27,7 @@ bool SearchCommand::isImageFile(const std::string& extension) const {
     return imageExtensions.count(extension);
 }
 
-// Helper to determine if a file matches common video extensions
+
 bool SearchCommand::isVideoFile(const std::string& extension) const {
     static const std::set<std::string> videoExtensions = {
         ".mp4", ".mov", ".avi", ".mkv", ".wmv", ".flv", ".webm", ".m4v", ".3gp"
@@ -35,7 +35,7 @@ bool SearchCommand::isVideoFile(const std::string& extension) const {
     return videoExtensions.count(extension);
 }
 
-// Helper to print highlighted text
+
 void printHighlighted(const std::string& text, const std::string& query, const std::string& baseColor) {
     if (query.empty()) {
         std::cout << baseColor << text << RESET;
@@ -80,7 +80,7 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
     int depth_limit = -1;
     std::vector<std::string> exclude_patterns;
 
-    // Parse arguments and flags
+
     for (size_t i = 0; i < args.size(); ++i) {
         if (args[i] == "-f") {
             search_folders = false;
@@ -118,9 +118,9 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
             fs::path p = entry.path();
             std::string item_name = p.filename().string();
             
-            // Check exclusion
+
             for (const auto& pattern : exclude_patterns) {
-                if (item_name == pattern) return false; // Signal to skip
+                if (item_name == pattern) return false;
             }
 
             std::string lower_item = item_name;
@@ -166,7 +166,7 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
         std::cerr << RED << "Error during search: " << e.what() << RESET << std::endl;
     }
 
-    // Output results
+
     if (found_items.empty()) {
         std::cout << "No items found." << std::endl;
     } else {

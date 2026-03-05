@@ -18,10 +18,11 @@ public/
 Thumbs.db
 
 # Test & Temp files
-file.txt
+goal.txt
 test_in_root.txt
 search_test_dir/
 fixed-smcli-script
 showcommand.cpp.example
 *.tmp
 *.log
+

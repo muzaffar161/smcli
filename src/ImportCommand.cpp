@@ -3,12 +3,11 @@
 #include <filesystem>
 #include <string>
 #include <vector>
-#include "PathUtils.h" // Include the new utility header
+#include "PathUtils.h"
 
 namespace fs = std::filesystem;
 
 void ImportCommand::execute(const std::vector<std::string>& args) const {
-    // smcli import <path> [as <name>]
     if (args.empty()) {
         std::cerr << "Usage: smcli import <source> [as <new_name>]" << std::endl;
         return;
@@ -37,8 +36,8 @@ void ImportCommand::execute(const std::vector<std::string>& args) const {
         }
         
         if (fs::exists(final_destination)) {
-            if (new_name.empty()) { // Only do conflict resolution if a name wasn't explicitly provided
-                final_destination = generate_new_path(final_destination); // Use the utility function
+            if (new_name.empty()) { 
+                final_destination = generate_new_path(final_destination); 
                 std::cout << "Destination '" << (current_dir / source_path.filename()) << "' already exists. Importing to '" << final_destination.filename() << "'." << std::endl;
             } else {
                  std::cerr << "Error: Destination '" << final_destination << "' already exists." << std::endl;

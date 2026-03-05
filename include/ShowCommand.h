@@ -5,7 +5,7 @@
 #include <vector>
 
 struct ShowOptions {
-    int maxDepth = -1; // -1 for infinite
+    int maxDepth = -1; 
     std::vector<std::string> excludePatterns;
 };
 

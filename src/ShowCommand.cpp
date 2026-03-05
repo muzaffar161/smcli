@@ -9,7 +9,7 @@
 
 namespace fs = std::filesystem;
 
-// Helper function to format size in human-readable format
+
 std::string formatSize(uintmax_t size) {
     if (size == 0) {
         return "0 B";
@@ -29,7 +29,7 @@ std::string formatSize(uintmax_t size) {
     return ss.str();
 }
 
-// Base class for file system nodes
+
 class FileSystemNode {
 protected:
     std::string fileName;
@@ -44,7 +44,7 @@ public:
     std::string getName() const { return fileName; }
 };
 
-// Class for files
+
 class File final : public FileSystemNode {
 public:
     File(const std::string& name, uintmax_t size) : FileSystemNode(name) {
@@ -59,7 +59,7 @@ public:
     }
 };
 
-// Class for directories
+
 class Directory final : public FileSystemNode {
 public:
     std::vector<FileSystemNode*> children;
@@ -96,7 +96,7 @@ public:
     }
 };
 
-// Helper function to build the directory tree
+
 Directory* buildTree(const fs::path& currentPath, int currentDepth, int maxDepth, const std::vector<std::string>& excludePatterns) {
     auto* dir = new Directory(currentPath.filename().string());
 
@@ -121,10 +121,10 @@ Directory* buildTree(const fs::path& currentPath, int currentDepth, int maxDepth
         }
     } catch (fs::filesystem_error& e) {
         std::cerr << "Error accessing " << currentPath << ": " << e.what() << std::endl;
-        return dir; // Return the directory even if there was an error accessing its contents
+        return dir; 
     }
 
-    // Sort entries alphabetically
+
     std::sort(entries.begin(), entries.end(), [](const auto& a, const auto& b) {
         return a.path().filename().string() < b.path().filename().string();
     });
@@ -137,7 +137,6 @@ Directory* buildTree(const fs::path& currentPath, int currentDepth, int maxDepth
                 dir->addChild(new File(entry.path().filename().string(), fs::file_size(entry.path())));
             }
         } catch (fs::filesystem_error& e) {
-            // Could fail to get file_size for a symlink, for example.
             dir->addChild(new File(entry.path().filename().string() + " [error]", 0));
         }
     }
