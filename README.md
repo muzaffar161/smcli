@@ -31,16 +31,16 @@ Displays a tree-like map of the specified directory or the current directory if 
 
 ```bash
 # Show map of the current directory
-./bin/smcli show
+smcli show
 
 # Show map of a specific directory
-./bin/smcli show /path/to/directory
+smcli show /path/to/directory
 
 # Limit tree display to 2 levels deep
-./bin/smcli show /path/to/directory --depth 2
+smcli show /path/to/directory --depth 2
 
 # Exclude specific files or directories from the tree
-./bin/smcli show /path/to/directory --exclude node_modules --exclude .git
+smcli show /path/to/directory --exclude node_modules --exclude .git
 ```
 
 **Options:**
@@ -55,12 +55,12 @@ Copies a file or directory from a source to a destination. Optionally, you can s
 
 ```bash
 # Copy 'file.txt' to 'destination_dir/'
-./bin/smcli copy file.txt to destination_dir/
-./bin/smcli cp file.txt to destination_dir/
+smcli copy file.txt to destination_dir/
+smcli cp file.txt to destination_dir/
 
 # Copy 'folder_a' to 'destination_dir/' as 'new_folder_name'
-./bin/smcli copy folder_a to destination_dir/ as new_folder_name
-./bin/smcli cp folder_a to destination_dir/ as new_folder_name
+smcli copy folder_a to destination_dir/ as new_folder_name
+smcli cp folder_a to destination_dir/ as new_folder_name
 ```
 
 ### `move` (Alias: `mv`)
@@ -71,12 +71,12 @@ Moves (renames) a file or directory from a source to a destination. Optionally, 
 
 ```bash
 # Move 'file.txt' to 'destination_dir/'
-./bin/smcli move file.txt to destination_dir/
-./bin/smcli mv file.txt to destination_dir/
+smcli move file.txt to destination_dir/
+smcli mv file.txt to destination_dir/
 
 # Move 'folder_a' to 'destination_dir/' as 'new_folder_name'
-./bin/smcli move folder_a to destination_dir/ as new_folder_name
-./bin/smcli mv folder_a to destination_dir/ as new_folder_name
+smcli move folder_a to destination_dir/ as new_folder_name
+smcli mv folder_a to destination_dir/ as new_folder_name
 ```
 
 ### `import` (Alias: `get`)
@@ -87,12 +87,12 @@ Copies a file or directory from a source to the current working directory where 
 
 ```bash
 # Import 'path/to/file.txt' to the current directory
-./bin/smcli import /path/to/file.txt
-./bin/smcli get /path/to/file.txt
+smcli import /path/to/file.txt
+smcli get /path/to/file.txt
 
 # Import 'path/to/folder_a' to the current directory as 'imported_folder'
-./bin/smcli import /path/to/folder_a as imported_folder
-./bin/smcli get /path/to/folder_a as imported_folder
+smcli import /path/to/folder_a as imported_folder
+smcli get /path/to/folder_a as imported_folder
 ```
 
 ### `search` (Alias: `find`)
@@ -103,31 +103,31 @@ Searches for files and folders matching a query in the current directory and its
 
 ```bash
 # Search for items with "report" in their name
-./bin/smcli search report
-./bin/smcli find report
+smcli search report
+smcli find report
 
 # Search for files with "document" in their name
-./bin/smcli search document -f
-./bin/smcli find document -f
+smcli search document -f
+smcli find document -f
 
 # Search for folders with "project" in their name
-./bin/smcli search project -fl
-./bin/smcli find project -fl
+smcli search project -fl
+smcli find project -fl
 
 # Search for image files with "vacation" in their name
-./bin/smcli search vacation -img
-./bin/smcli find vacation -img
+smcli search vacation -img
+smcli find vacation -img
 
 # Search for video files with "family" in their name
-./bin/smcli search family -vid
-./bin/smcli find family -vid
+smcli search family -vid
+smcli find family -vid
 
 # Search for a file with the exact name "my_document.pdf"
-./bin/smcli search my_document.pdf --exact-name
-./bin/smcli find my_document.pdf --exact-name
+smcli search my_document.pdf --exact-name
+smcli find my_document.pdf --exact-name
 
 # Search for items only in the current directory (depth 0)
-./bin/smcli search my_file --depth 0
+smcli search my_file --depth 0
 ```
 
 **Flags:**
