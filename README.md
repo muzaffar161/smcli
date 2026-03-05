@@ -8,9 +8,10 @@
 ![Design](https://img.shields.io/badge/design-simple-orange)
 ![Performance](https://img.shields.io/badge/performance-lightweight-yellow)
 ![Cross Platform](https://img.shields.io/badge/cross--platform-supported-success)
+![GitHub stars](https://img.shields.io/github/stars/muzaffar161/smcli)
+![GitHub forks](https://img.shields.io/github/forks/muzaffar161/smcli)
+![GitHub issues](https://img.shields.io/github/issues/muzaffar161/smcli)
 
-
-A smcli command-line interface.
 
 SmCLI is a cross-platform command line tool written in C++ for file management, search, and directory visualization.
 
@@ -20,6 +21,15 @@ Supports:
 - macOS
 - Linux
 - Windows
+
+## Quick Example
+
+```bash
+smcli show
+smcli search report
+smcli copy file.txt to backup/
+smcli move file.txt to archive/
+```
 
 ## Project Structure
 
