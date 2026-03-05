@@ -13,7 +13,6 @@
 ![GitHub forks](https://img.shields.io/github/forks/muzaffar161/smcli)
 ![GitHub issues](https://img.shields.io/github/issues/muzaffar161/smcli)
 
-![GitHub release](https://img.shields.io/github/v/release/muzaffar161/smcli)
 
 A simple and lightweight cross-platform CLI tool for file management and directory exploration.
 
