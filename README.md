@@ -11,15 +11,66 @@ A smcli command-line interface.
 - `dist/`: Contains installers and other distribution-related files.
 - `bin/`: Contains the compiled executable.
 
-## Building
+## Installation
 
-To build the project, run the following command from the root directory:
+Choose the installer for your operating system from the `dist/installers/` directory.
+
+### 🍎 macOS
+
+1.  Open Terminal.
+2.  Navigate to the macOS installer directory:
+    ```bash
+    cd dist/installers/smcliMac
+    ```
+3.  Run the installer:
+    ```bash
+    chmod +x install.sh
+    ./install.sh
+    ```
+4.  Restart your terminal or run `source ~/.zshrc` (for Zsh) or `source ~/.bash_profile` (for Bash) to enable auto-completion.
+
+### 🐧 Linux
+
+1.  Open Terminal.
+2.  Navigate to the Linux installer directory:
+    ```bash
+    cd dist/installers/smcliLinux
+    ```
+3.  Run the installer:
+    ```bash
+    chmod +x install.sh
+    ./install.sh
+    ```
+4.  Restart your terminal to activate the command and auto-completion.
+
+### 🪟 Windows
+
+1.  Ensure you have a C++ compiler (like MinGW/g++) installed and added to your `PATH`.
+2.  Open **Command Prompt** or **PowerShell** as **Administrator**.
+3.  Navigate to the Windows installer directory:
+    ```cmd
+    cd dist\installers\smcliWin
+    ```
+4.  Run the installer:
+    ```cmd
+    install.bat
+    ```
+
+---
+
+## Manual Building (Alternative)
+
+If you prefer to build manually, you can use the provided `Makefile` or `build.sh` script:
 
 ```bash
+# Using Makefile
+make clean all
+
+# Using build.sh
 ./build.sh
 ```
 
-This will compile the source code and create the `smcli` executable in the `bin/` directory.
+The compiled binary will be located in the `bin/` directory.
 
 ## Features
 
