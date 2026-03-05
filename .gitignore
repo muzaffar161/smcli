@@ -1,0 +1,27 @@
+# Binaries & Build Artifacts
+bin/
+obj/
+smcli
+*.exe
+*.o
+
+# Private Assets
+public/
+
+# IDE Settings
+.vscode/
+.idea/
+*.swp
+
+# OS Junk
+.DS_Store
+Thumbs.db
+
+# Test & Temp files
+file.txt
+test_in_root.txt
+search_test_dir/
+fixed-smcli-script
+showcommand.cpp.example
+*.tmp
+*.log
