@@ -1,0 +1,50 @@
+name: Build Artifacts
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            artifact_name: smcli-macos
+            archive_name: smcli-macos.tar.gz
+            asset_name: smcli
+          - os: ubuntu-latest
+            artifact_name: smcli-linux
+            archive_name: smcli-linux.tar.gz
+            asset_name: smcli
+          - os: windows-latest
+            artifact_name: smcli-windows
+            archive_name: smcli-windows.zip
+            asset_name: smcli.exe
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build (Unix)
+      if: matrix.os != 'windows-latest'
+      run: |
+        mkdir -p bin
+        make all
+        tar -czf ${{ matrix.archive_name }} -C bin ${{ matrix.asset_name }}
+
+    - name: Build (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        mkdir bin
+        g++ -std=c++17 -I./include -O3 src/*.cpp -o bin/smcli.exe
+        Compress-Archive -Path bin/smcli.exe -DestinationPath ${{ matrix.archive_name }}
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: ${{ matrix.archive_name }}
