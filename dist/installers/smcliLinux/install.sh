@@ -21,7 +21,10 @@ for cmd in g++ make; do
 done
 
 # 2. Build from root
-cd ../../../
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$SCRIPT_DIR/../../.."
+cd "$PROJECT_ROOT"
+
 echo "Building SmCLI..."
 make clean all
 
