@@ -3,6 +3,12 @@
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+![Type](https://img.shields.io/badge/type-CLI%20Tool-purple)
+![Beginner Friendly](https://img.shields.io/badge/good%20for-beginners-brightgreen)
+![Design](https://img.shields.io/badge/design-simple-orange)
+![Performance](https://img.shields.io/badge/performance-lightweight-yellow)
+![Cross Platform](https://img.shields.io/badge/cross--platform-supported-success)
+
 
 A smcli command-line interface.
 
