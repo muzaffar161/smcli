@@ -12,8 +12,8 @@ fs::path generate_new_path(const fs::path& destination_path) {
     }
 
     fs::path parent_path = destination_path.parent_path();
-    std::string stem = destination_path.stem().string();
-    std::string extension = destination_path.extension().string();
+    std::string stem = destination_path.stem().u8string();
+    std::string extension = destination_path.extension().u8string();
 
     std::string stem_base = stem;
     int copy_num = 1;

@@ -1,6 +1,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include "ShowCommand.h"
 #include "CopyCommand.h"
 #include "MoveCommand.h"
@@ -33,6 +36,10 @@ void printUsage() {
 }
 
 int main(int argc, char* argv[]) {
+#ifdef _WIN32
+    SetConsoleOutputCP(65001);
+    SetConsoleCP(65001);
+#endif
     if (argc < 2) {
         printUsage();
         return 1;

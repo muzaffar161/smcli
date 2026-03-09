@@ -63,6 +63,7 @@ public:
 class Directory final : public FileSystemNode {
 public:
     std::vector<FileSystemNode*> children;
+    uintmax_t excludedSize = 0;
 
     explicit Directory(const std::string& name) : FileSystemNode(name) {}
 
@@ -76,8 +77,12 @@ public:
         children.push_back(child);
     }
 
+    void addExcludedSize(uintmax_t size) {
+        excludedSize += size;
+    }
+
     uintmax_t getSize() const override {
-        uintmax_t total = 0;
+        uintmax_t total = excludedSize;
         for (auto const child : children) {
             total += child->getSize();
         }
@@ -97,17 +102,30 @@ public:
 };
 
 
-Directory* buildTree(const fs::path& currentPath, int currentDepth, int maxDepth, const std::vector<std::string>& excludePatterns) {
-    auto* dir = new Directory(currentPath.filename().string());
+uintmax_t calculateTotalSize(const fs::path& p) {
+    uintmax_t total = 0;
+    try {
+        if (fs::is_regular_file(p)) {
+            total = fs::file_size(p);
+        } else if (fs::is_directory(p)) {
+            for (const auto& entry : fs::recursive_directory_iterator(p, fs::directory_options::skip_permission_denied)) {
+                if (fs::is_regular_file(entry.status())) {
+                    total += fs::file_size(entry.path());
+                }
+            }
+        }
+    } catch (...) {}
+    return total;
+}
 
-    if (maxDepth != -1 && currentDepth >= maxDepth) {
-        return dir;
-    }
+
+Directory* buildTree(const fs::path& currentPath, int currentDepth, int maxDepth, const std::vector<std::string>& excludePatterns) {
+    auto* dir = new Directory(currentPath.filename().u8string());
 
     std::vector<fs::directory_entry> entries;
     try {
         for (const auto& entry : fs::directory_iterator(currentPath)) {
-            std::string name = entry.path().filename().string();
+            std::string name = entry.path().filename().u8string();
             bool excluded = false;
             for (const auto& pattern : excludePatterns) {
                 if (name == pattern) {
@@ -117,6 +135,8 @@ Directory* buildTree(const fs::path& currentPath, int currentDepth, int maxDepth
             }
             if (!excluded) {
                 entries.push_back(entry);
+            } else {
+                dir->addExcludedSize(calculateTotalSize(entry.path()));
             }
         }
     } catch (fs::filesystem_error& e) {
@@ -126,18 +146,22 @@ Directory* buildTree(const fs::path& currentPath, int currentDepth, int maxDepth
 
 
     std::sort(entries.begin(), entries.end(), [](const auto& a, const auto& b) {
-        return a.path().filename().string() < b.path().filename().string();
+        return a.path().filename().u8string() < b.path().filename().u8string();
     });
 
     for (const auto& entry : entries) {
         try {
             if (fs::is_directory(entry.symlink_status())) {
-                dir->addChild(buildTree(entry.path(), currentDepth + 1, maxDepth, excludePatterns));
+                if (maxDepth != -1 && currentDepth >= maxDepth) {
+                    dir->addExcludedSize(calculateTotalSize(entry.path()));
+                } else {
+                    dir->addChild(buildTree(entry.path(), currentDepth + 1, maxDepth, excludePatterns));
+                }
             } else if (fs::is_regular_file(entry.symlink_status())) {
-                dir->addChild(new File(entry.path().filename().string(), fs::file_size(entry.path())));
+                 dir->addChild(new File(entry.path().filename().u8string(), fs::file_size(entry.path())));
             }
         } catch (fs::filesystem_error& e) {
-            dir->addChild(new File(entry.path().filename().string() + " [error]", 0));
+            dir->addChild(new File(entry.path().filename().u8string() + " [error]", 0));
         }
     }
 
@@ -160,7 +184,7 @@ void ShowCommand::execute(const std::string& path, const ShowOptions& options) c
 
     Directory* root = buildTree(targetPath, 0, options.maxDepth, options.excludePatterns);
 
-    std::cout << "Directory tree for: " << fs::absolute(targetPath).string() << "\n";
+    std::cout << "Directory tree for: " << fs::absolute(targetPath).u8string() << "\n";
     root->print("", true, true);
 
     std::cout << "\nTotal size: " << formatSize(root->getSize()) << std::endl;

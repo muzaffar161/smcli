@@ -116,7 +116,7 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
     auto process_entry = [&](const fs::directory_entry& entry, int current_depth) {
         try {
             fs::path p = entry.path();
-            std::string item_name = p.filename().string();
+            std::string item_name = p.filename().u8string();
             
 
             for (const auto& pattern : exclude_patterns) {
@@ -132,7 +132,7 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
 
             if (matches) {
                 if (fs::is_regular_file(entry.status()) && search_files) {
-                    std::string ext = p.extension().string();
+                    std::string ext = p.extension().u8string();
                     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
                     if ((!search_images || isImageFile(ext)) && (!search_videos || isVideoFile(ext))) {
                         found_items.push_back(p);
@@ -172,12 +172,12 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
     } else {
         std::cout << "\n" << BOLD << "Found " << found_items.size() << " items:" << RESET << std::endl;
         for (const auto& item : found_items) {
-            std::string parent = item.parent_path().string();
-            std::string name = item.filename().string();
+            std::string parent = item.parent_path().u8string();
+            std::string name = item.filename().u8string();
             
             std::cout << GRAY << parent << (parent.empty() ? "" : "/") << RESET;
             
-            std::string color = fs::is_directory(item) ? BLUE : (isImageFile(item.extension().string()) || isVideoFile(item.extension().string()) ? GREEN : RESET);
+            std::string color = fs::is_directory(item) ? BLUE : (isImageFile(item.extension().u8string()) || isVideoFile(item.extension().u8string()) ? GREEN : RESET);
             if (fs::is_directory(item)) color += BOLD;
 
             printHighlighted(name, query, color);
