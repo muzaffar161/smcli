@@ -10,6 +10,10 @@ jobs:
   build:
     name: Build for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    # Устанавливаем bash как оболочку по умолчанию для всех шагов
+    defaults:
+      run:
+        shell: bash
     strategy:
       matrix:
         include:
@@ -27,6 +31,7 @@ jobs:
             artifact_name: smcli_1.0.0_windows_x64
             archive_name: smcli_1.0.0_windows_x64.zip
             asset_name: smcli.exe
+            installer_path: dist/installers/smcliWin/setup.iss
 
     steps:
     - uses: actions/checkout@v4
@@ -36,15 +41,12 @@ jobs:
       run: |
         mkdir -p bin
         make all
-        # Создаем временную папку для чистой упаковки
         mkdir -p release_unix
         cp bin/${{ matrix.asset_name }} release_unix/
         cp ${{ matrix.installer_path }} release_unix/
         cp completions/smcli-completion.sh release_unix/
         cp README.md release_unix/
-        # Упаковываем содержимое папки без самой папки (через -C)
         tar -czf ${{ matrix.archive_name }} -C release_unix .
-        # Готовим финальную папку для артефакта GitHub
         mkdir -p upload_dir
         cp ${{ matrix.archive_name }} upload_dir/
 
@@ -53,10 +55,10 @@ jobs:
       run: |
         mkdir -p bin
         g++ -std=c++17 -I./include -O3 src/*.cpp -o bin/smcli.exe
-        # Готовим структуру ZIP архива: bin/smcli.exe
         mkdir -p release_win/bin
         cp bin/smcli.exe release_win/bin/
-        Compress-Archive -Path release_win/* -DestinationPath ${{ matrix.archive_name }}
+        # Для ZIP на Windows используем 7z (доступен в bash на GitHub runners) или zip
+        7z a ${{ matrix.archive_name }} ./release_win/*
 
     - name: Copy binary for installer
       if: matrix.os == 'windows-latest'
@@ -66,6 +68,7 @@ jobs:
 
     - name: Create Inno Setup Installer
       if: matrix.os == 'windows-latest'
+      # Этот экшен сам запускает Inno Setup, оболочка bash ему не мешает
       uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
       with:
         path: dist/installers/smcliWin/setup.iss
