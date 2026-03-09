@@ -2,13 +2,13 @@
 AppName=smcli
 AppVersion=1.0.0
 DefaultDirName={pf}\smartTerm
-OutputDir=.
+OutputDir=dist\installers\smcliWin
 OutputBaseFilename=smcli-setup
 DisableDirPage=no
 
 [Files]
 ; путь к exe после сборки (bin/smcli.exe)
-Source: "..\..\bin\smcli.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "bin\smcli.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\smartTerm CLI"; Filename: "{app}\smcli.exe"
