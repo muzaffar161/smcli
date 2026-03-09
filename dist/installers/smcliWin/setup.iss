@@ -1,5 +1,5 @@
 [Setup]
-AppName=smartTerm CLI
+AppName=smcli
 AppVersion=1.0.0
 DefaultDirName={pf}\smartTerm
 OutputDir=.
