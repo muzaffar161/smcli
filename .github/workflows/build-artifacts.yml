@@ -14,16 +14,18 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            artifact_name: smcli-macos
-            archive_name: smcli-macos.tar.gz
+            artifact_name: smcli_1.0.0_macos_arm64
+            archive_name: smcli_1.0.0_macos_arm64.tar.gz
             asset_name: smcli
+            installer_path: dist/installers/smcliMac/install.sh
           - os: ubuntu-latest
-            artifact_name: smcli-linux
-            archive_name: smcli-linux.tar.gz
+            artifact_name: smcli_1.0.0_linux_x64
+            archive_name: smcli_1.0.0_linux_x64.tar.gz
             asset_name: smcli
+            installer_path: dist/installers/smcliLinux/install.sh
           - os: windows-latest
-            artifact_name: smcli-windows
-            archive_name: smcli-windows.zip
+            artifact_name: smcli_1.0.0_windows_x64
+            archive_name: smcli_1.0.0_windows_x64.zip
             asset_name: smcli.exe
 
     steps:
@@ -34,18 +36,32 @@ jobs:
       run: |
         mkdir -p bin
         make all
-        tar -czf ${{ matrix.archive_name }} -C bin ${{ matrix.asset_name }}
+        # Создаем временную папку для чистой упаковки
+        mkdir -p release_unix
+        cp bin/${{ matrix.asset_name }} release_unix/
+        cp ${{ matrix.installer_path }} release_unix/
+        cp completions/smcli-completion.sh release_unix/
+        cp README.md release_unix/
+        # Упаковываем содержимое папки без самой папки (через -C)
+        tar -czf ${{ matrix.archive_name }} -C release_unix .
+        # Готовим финальную папку для артефакта GitHub
+        mkdir -p upload_dir
+        cp ${{ matrix.archive_name }} upload_dir/
 
     - name: Build (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        mkdir bin
+        mkdir -p bin
         g++ -std=c++17 -I./include -O3 src/*.cpp -o bin/smcli.exe
-        Compress-Archive -Path bin/smcli.exe -DestinationPath ${{ matrix.archive_name }}
+        # Готовим структуру ZIP архива: bin/smcli.exe
+        mkdir -p release_win/bin
+        cp bin/smcli.exe release_win/bin/
+        Compress-Archive -Path release_win/* -DestinationPath ${{ matrix.archive_name }}
 
     - name: Copy binary for installer
       if: matrix.os == 'windows-latest'
       run: |
+        mkdir -p dist/installers/smcliWin
         cp bin/smcli.exe dist/installers/smcliWin/smcli.exe
 
     - name: Create Inno Setup Installer
@@ -54,10 +70,15 @@ jobs:
       with:
         path: dist/installers/smcliWin/setup.iss
 
+    - name: Prepare Final Artifact Folder (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        mkdir -p upload_dir
+        cp ${{ matrix.archive_name }} upload_dir/
+        cp dist/installers/smcliWin/smcli-setup.exe upload_dir/
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.artifact_name }}
-        path: |
-          ${{ matrix.archive_name }}
-          dist/installers/smcliWin/smcli-setup.exe
+        path: upload_dir/
