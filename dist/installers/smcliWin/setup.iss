@@ -8,7 +8,7 @@ DisableDirPage=no
 
 [Files]
 ; путь к exe после сборки (bin\smcli.exe в корне репозитория)
-Source: "..\..\..\bin\smcli.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "smcli.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\smartTerm CLI"; Filename: "{app}\smcli.exe"

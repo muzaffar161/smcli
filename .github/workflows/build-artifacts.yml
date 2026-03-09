@@ -41,6 +41,12 @@ jobs:
       run: |
         mkdir bin
         g++ -std=c++17 -I./include -O3 src/*.cpp -o bin/smcli.exe
+        Compress-Archive -Path bin/smcli.exe -DestinationPath ${{ matrix.archive_name }}
+
+    - name: Copy binary for installer
+      if: matrix.os == 'windows-latest'
+      run: |
+        cp bin/smcli.exe dist/installers/smcliWin/smcli.exe
 
     - name: Create Inno Setup Installer
       if: matrix.os == 'windows-latest'
@@ -49,15 +55,9 @@ jobs:
         path: dist/installers/smcliWin/setup.iss
 
     - name: Upload Artifact
-      if: matrix.os != 'windows-latest'
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.artifact_name }}
-        path: ${{ matrix.archive_name }}
-
-    - name: Upload Windows Installer
-      if: matrix.os == 'windows-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.artifact_name }}
-        path: dist/installers/smcliWin/smcli-setup.exe
+        path: |
+          ${{ matrix.archive_name }}
+          dist/installers/smcliWin/smcli-setup.exe
