@@ -3,11 +3,15 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 
 struct ShowOptions {
     int maxDepth = -1; 
     std::vector<std::string> excludePatterns;
 };
+
+// Reusable formatting utility
+std::string formatSize(uintmax_t size);
 
 class ShowCommand {
 public:

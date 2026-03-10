@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include "UIUtils.h"
 
 namespace fs = std::filesystem;
 
@@ -112,8 +113,13 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
     
     std::vector<fs::path> found_items;
     std::set<std::string> inaccessible_directories;
+    Spinner spinner;
+    int items_processed = 0;
 
     auto process_entry = [&](const fs::directory_entry& entry, int current_depth) {
+        if (++items_processed % 100 == 0) {
+            spinner.next("Scanning... [" + std::to_string(found_items.size()) + " matches found]");
+        }
         try {
             fs::path p = entry.path();
             std::string item_name = p.filename().u8string();
@@ -162,7 +168,9 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
                 }
             }
         }
+        spinner.clear();
     } catch (const fs::filesystem_error& e) {
+        spinner.clear();
         std::cerr << RED << "Error during search: " << e.what() << RESET << std::endl;
     }
 

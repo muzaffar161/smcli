@@ -25,4 +25,4 @@ fixed-smcli-script
 showcommand.cpp.example
 *.tmp
 *.log
-
+/commands.md

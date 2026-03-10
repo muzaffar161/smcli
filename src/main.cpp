@@ -9,12 +9,14 @@
 #include "MoveCommand.h"
 #include "ImportCommand.h"
 #include "SearchCommand.h"
+#include "DUCommand.h"
 
 void printUsage() {
     std::cout << "Usage: smcli <command> [options]\n"
               << "\n"
               << "Commands:\n"
               << "  show [path] [--depth <N>] [--exclude <name>]  Display a tree map of a directory.\n"
+              << "  du [path]                                     Show disk usage with progress bars.\n"
               << "  copy | cp <source> to <dest> [as <name>]     Copy a file or directory.\n"
               << "  move | mv <source> to <dest> [as <name>]     Move/rename a file or directory.\n"
               << "  import | get <source> [as <name>]            Import a file or directory to current location.\n"
@@ -48,6 +50,10 @@ int main(int argc, char* argv[]) {
     std::string command = argv[1];
     std::vector<std::string> args;
     for (int i = 2; i < argc; ++i) {
+        if (std::string(argv[i]) == "--help") {
+            printUsage();
+            return 0;
+        }
         args.push_back(argv[i]);
     }
 
@@ -70,6 +76,9 @@ int main(int argc, char* argv[]) {
             }
         }
         showCmd.execute(path, options);
+    } else if (command == "du") {
+        DUCommand duCmd;
+        duCmd.execute(args);
     } else if (command == "copy" || command == "cp") {
         CopyCommand copyCmd;
         copyCmd.execute(args);
