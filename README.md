@@ -44,7 +44,8 @@ smcli move file.txt to archive/
 - `completions/`: Contains shell completion scripts.
 - `dist/`: Contains installers and other distribution-related files.
 - `bin/`: Contains the compiled executable.
-- `.smcliignore`: Configuration file for ignoring specific files and directories.
+- `.smcliignore`: Local configuration file for ignoring specific files and directories.
+- `.smcliignore-global`: Global ignore file (located next to the `smcli` binary).
 
 ## Installation
 
@@ -113,7 +114,7 @@ The compiled binary will be located in the `bin/` directory.
 
 Displays a tree-like map of the specified directory or the current directory if no path is provided. File and directory sizes are displayed in a human-readable format (B, KB, MB, GB, TB).
 
-**Smart Ignoring:** Automatically reads `.smcliignore` to skip unnecessary files (like `.git`, `node_modules`).
+**Smart Ignoring:** Automatically reads local `.smcliignore` (searching up the tree) and global `.smcliignore-global` to skip unnecessary files.
 
 **Usage:**
 
@@ -127,17 +128,17 @@ smcli show /path/to/directory
 # Limit tree display to 2 levels deep
 smcli show /path/to/directory --depth 2
 
-# Exclude specific files or directories from the tree
-smcli show /path/to/directory --exclude node_modules --exclude .git
+# Exclude multiple items manually
+smcli show --exclude node_modules --exclude .git --exclude "*.log"
 
-# Show all files, bypassing .smcliignore
-smcli show /path/to/directory --no-ignore
+# Show all files, bypassing all ignore rules
+smcli show --no-ignore
 ```
 
 **Options:**
 *   `--depth <N>`: Limit tree display to N levels deep.
-*   `--exclude <name>`: Exclude files or directories with the given name.
-*   `--no-ignore`: Show all files, bypassing `.smcliignore`.
+*   `--exclude <name>`: Exclude specific files or directories (can be used multiple times).
+*   `--no-ignore`: Show all files, bypassing `.smcliignore` and global ignore.
 
 ### `du` (Disk Usage)
 
@@ -154,6 +155,18 @@ smcli du
 
 # Analyze a specific path
 smcli du /path/to/folder
+```
+
+### Global Ignore Management
+
+Manage a global list of patterns to ignore across all your projects.
+
+```bash
+# Add a pattern (e.g., all temp files) to global ignore list
+smcli --exclude-add-global "*.tmp"
+
+# Add a specific folder to global ignore
+smcli --exclude-add-global "build/"
 ```
 
 ### `copy` (Alias: `cp`)
@@ -215,20 +228,30 @@ Searches for files and folders matching a query with advanced filtering and cont
 smcli search report
 smcli find report
 
-# Search INSIDE file contents
+# Search INSIDE file contents (Content Search)
 smcli search "TODO" --content
 
-# Search with size filters
-smcli search "" --min-size 10MB --max-size 1GB
+# Search with multiple manual excludes
+smcli search "fix" --exclude "dist" --exclude "bin" --exclude "*.bak"
 
-# Search by modification date (last 7 days)
-smcli search "fix" --newer-than 7
+# Search with size filters (e.g., find large files)
+smcli search "" --min-size 100MB --max-size 2GB
 
-# Search for image files with "vacation" in their name
+# Search by modification date
+# (Find files modified in the last 3 days)
+smcli search "" --newer-than 3
+
+# Search for image files only
 smcli search vacation -img
 
-# Search bypassing .smcliignore
-smcli search "secret" --no-ignore
+# Search for video files only
+smcli search family -vid
+
+# Search for exact name match (case-insensitive)
+smcli search my_document.pdf --exact-name
+
+# Search bypassing all ignore rules (local and global)
+smcli search "API_KEY" --content --no-ignore
 ```
 
 **Flags:**
@@ -241,9 +264,13 @@ smcli search "secret" --no-ignore
 *   `--max-size <S>`: Search files smaller than size S.
 *   `--newer-than <N>`: Modified in the last N days.
 *   `--older-than <N>`: Modified more than N days ago.
+*   `--exclude <name>`: Exclude specific name (can be used multiple times).
 *   `--exact-name`: Search for exact name match (case-insensitive).
 *   `--depth <N>`: Limit search to N levels deep.
-*   `--no-ignore`: Search all files, bypassing `.smcliignore`.
+*   `--no-ignore`: Search all files, bypassing ignore files.
+
+**Note on macOS Permissions for `search` command:**
+On macOS, for the `search` command to access all directories (especially personal folders like `Documents`, `Downloads`, `Desktop`, etc.), you might need to grant "Full Disk Access" to your terminal application (e.g., Terminal.app, iTerm2.app). You can do this in `System Settings > Privacy & Security > Full Disk Access`. If permissions are not granted, the `search` command will skip inaccessible directories and report them at the end.
 
 ## Tab Completion
 
@@ -252,18 +279,14 @@ Tab completion for `smcli` now supports commands, aliases, flags, and path compl
 To enable tab completion for `smcli`, you need to source the completion script for your shell.
 
 For Bash, add the following to your `~/.bashrc`:
-
 ```bash
 source /path/to/smcli-completion.sh
 ```
 
 For Zsh, add the following to your `~/.zshrc`:
-
 ```bash
 source /path/to/smcli-completion.sh
 ```
-
-You will need to replace `/path/to/smcli-completion.sh` with the actual path to the `smcli-completion.sh` file in this project.
 
 
 ## Keywords
