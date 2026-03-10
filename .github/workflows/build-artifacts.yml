@@ -46,6 +46,7 @@ jobs:
         cp ${{ matrix.installer_path }} release_unix/
         cp completions/smcli-completion.sh release_unix/
         cp README.md release_unix/
+        cp .smcliignore release_unix/
         tar -czf ${{ matrix.archive_name }} -C release_unix .
         mkdir -p upload_dir
         cp ${{ matrix.archive_name }} upload_dir/
@@ -57,6 +58,7 @@ jobs:
         g++ -std=c++17 -I./include -O3 src/*.cpp -o bin/smcli.exe
         mkdir -p release_win/bin
         cp bin/smcli.exe release_win/bin/
+        cp .smcliignore release_win/
         # Для ZIP на Windows используем 7z (доступен в bash на GitHub runners) или zip
         7z a ${{ matrix.archive_name }} ./release_win/*
 

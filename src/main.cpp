@@ -15,7 +15,7 @@ void printUsage() {
     std::cout << "Usage: smcli <command> [options]\n"
               << "\n"
               << "Commands:\n"
-              << "  show [path] [--depth <N>] [--exclude <name>]  Display a tree map of a directory.\n"
+              << "  show [path] [--depth <N>] [--exclude <name>] [--no-ignore]  Display a tree map of a directory.\n"
               << "  du [path]                                     Show disk usage with progress bars.\n"
               << "  copy | cp <source> to <dest> [as <name>]     Copy a file or directory.\n"
               << "  move | mv <source> to <dest> [as <name>]     Move/rename a file or directory.\n"
@@ -26,15 +26,22 @@ void printUsage() {
               << "Show Options:\n"
               << "  --depth <N>    : Limit tree display to N levels deep.\n"
               << "  --exclude <name>: Exclude files or directories with the given name.\n"
+              << "  --no-ignore    : Show all files, bypassing .smcliignore.\n"
               << "\n"
               << "Search Options:\n"
               << "  -f             : Search for files only.\n"
               << "  -fl            : Search for folders only.\n"
               << "  -img           : Search for image files only.\n"
               << "  -vid           : Search for video files only.\n"
+              << "  -c, --content  : Search inside file contents.\n"
               << "  --exact-name   : Search for exact name match (case-insensitive).\n"
               << "  --depth <N>    : Limit search to N levels deep.\n"
-              << "  --exclude <name>: Exclude files or folders with the given name.\n";
+              << "  --exclude <name>: Exclude files or folders with the given name.\n"
+              << "  --min-size <S> : Search files larger than S (e.g. 10MB).\n"
+              << "  --max-size <S> : Search files smaller than S.\n"
+              << "  --newer-than <N>: Modified in the last N days.\n"
+              << "  --older-than <N>: Modified more than N days ago.\n"
+              << "  --no-ignore    : Search all files, bypassing .smcliignore.\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -78,6 +85,8 @@ int main(int argc, char* argv[]) {
                 }
             } else if (args[i] == "--exclude" && i + 1 < args.size()) {
                 options.excludePatterns.push_back(args[++i]);
+            } else if (args[i] == "--no-ignore") {
+                options.noIgnore = true;
             } else if (path.empty() && args[i][0] != '-') {
                 path = args[i];
             }

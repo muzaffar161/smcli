@@ -31,6 +31,7 @@ Supports:
 ```bash
 smcli show
 smcli search report
+smcli du /Users/user/Movies
 smcli copy file.txt to backup/
 smcli move file.txt to archive/
 ```
@@ -43,6 +44,7 @@ smcli move file.txt to archive/
 - `completions/`: Contains shell completion scripts.
 - `dist/`: Contains installers and other distribution-related files.
 - `bin/`: Contains the compiled executable.
+- `.smcliignore`: Configuration file for ignoring specific files and directories.
 
 ## Installation
 
@@ -111,6 +113,8 @@ The compiled binary will be located in the `bin/` directory.
 
 Displays a tree-like map of the specified directory or the current directory if no path is provided. File and directory sizes are displayed in a human-readable format (B, KB, MB, GB, TB).
 
+**Smart Ignoring:** Automatically reads `.smcliignore` to skip unnecessary files (like `.git`, `node_modules`).
+
 **Usage:**
 
 ```bash
@@ -125,11 +129,32 @@ smcli show /path/to/directory --depth 2
 
 # Exclude specific files or directories from the tree
 smcli show /path/to/directory --exclude node_modules --exclude .git
+
+# Show all files, bypassing .smcliignore
+smcli show /path/to/directory --no-ignore
 ```
 
 **Options:**
 *   `--depth <N>`: Limit tree display to N levels deep.
 *   `--exclude <name>`: Exclude files or directories with the given name.
+*   `--no-ignore`: Show all files, bypassing `.smcliignore`.
+
+### `du` (Disk Usage)
+
+Visualizes disk space usage with beautiful progress bars, showing which folders take up the most space.
+
+**Example output:**
+`[████████░░] 80% (2GB) /Users/user/Movies`
+
+**Usage:**
+
+```bash
+# Analyze current directory
+smcli du
+
+# Analyze a specific path
+smcli du /path/to/folder
+```
 
 ### `copy` (Alias: `cp`)
 
@@ -181,7 +206,7 @@ smcli get /path/to/folder_a as imported_folder
 
 ### `search` (Alias: `find`)
 
-Searches for files and folders matching a query in the current directory and its subdirectories.
+Searches for files and folders matching a query with advanced filtering and content search.
 
 **Usage:**
 
@@ -190,40 +215,35 @@ Searches for files and folders matching a query in the current directory and its
 smcli search report
 smcli find report
 
-# Search for files with "document" in their name
-smcli search document -f
-smcli find document -f
+# Search INSIDE file contents
+smcli search "TODO" --content
 
-# Search for folders with "project" in their name
-smcli search project -fl
-smcli find project -fl
+# Search with size filters
+smcli search "" --min-size 10MB --max-size 1GB
+
+# Search by modification date (last 7 days)
+smcli search "fix" --newer-than 7
 
 # Search for image files with "vacation" in their name
 smcli search vacation -img
-smcli find vacation -img
 
-# Search for video files with "family" in their name
-smcli search family -vid
-smcli find family -vid
-
-# Search for a file with the exact name "my_document.pdf"
-smcli search my_document.pdf --exact-name
-smcli find my_document.pdf --exact-name
-
-# Search for items only in the current directory (depth 0)
-smcli search my_file --depth 0
+# Search bypassing .smcliignore
+smcli search "secret" --no-ignore
 ```
 
 **Flags:**
 *   `-f`: Search for files only.
 *   `-fl`: Search for folders only.
+*   `-c, --content`: Search inside file contents.
 *   `-img`: Search for image files (e.g., .jpg, .png, .gif).
 *   `-vid`: Search for video files (e.g., .mp4, .mov, .avi).
+*   `--min-size <S>`: Search files larger than size S (e.g., 10MB).
+*   `--max-size <S>`: Search files smaller than size S.
+*   `--newer-than <N>`: Modified in the last N days.
+*   `--older-than <N>`: Modified more than N days ago.
 *   `--exact-name`: Search for exact name match (case-insensitive).
-*   `--depth <N>`: Limit search to N levels deep (0 for current directory only).
-
-**Note on macOS Permissions for `search` command:**
-On macOS, for the `search` command to access all directories (especially personal folders like `Documents`, `Downloads`, `Desktop`, etc.), you might need to grant "Full Disk Access" to your terminal application (e.g., Terminal.app, iTerm2.app). You can do this in `System Settings > Privacy & Security > Full Disk Access`. If permissions are not granted, the `search` command will skip inaccessible directories and report them at the end.
+*   `--depth <N>`: Limit search to N levels deep.
+*   `--no-ignore`: Search all files, bypassing `.smcliignore`.
 
 ## Tab Completion
 
@@ -253,4 +273,5 @@ command line utility
 cpp cli tool  
 file manager cli  
 terminal file search  
-cross platform cli
+cross platform cli  
+disk usage visualizer

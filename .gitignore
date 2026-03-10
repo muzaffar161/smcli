@@ -26,3 +26,5 @@ showcommand.cpp.example
 *.tmp
 *.log
 /commands.md
+/.env
+/test_todo.txt

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include "PathUtils.h"
 
 namespace fs = std::filesystem;
 
@@ -128,7 +129,7 @@ Directory* buildTree(const fs::path& currentPath, int currentDepth, int maxDepth
             std::string name = entry.path().filename().u8string();
             bool excluded = false;
             for (const auto& pattern : excludePatterns) {
-                if (name == pattern) {
+                if (wildcard_match(name, pattern)) {
                     excluded = true;
                     break;
                 }
@@ -182,7 +183,13 @@ void ShowCommand::execute(const std::string& path, const ShowOptions& options) c
         return;
     }
 
-    Directory* root = buildTree(targetPath, 0, options.maxDepth, options.excludePatterns);
+    std::vector<std::string> combinedExclude;
+    if (!options.noIgnore) {
+        combinedExclude = load_ignore_patterns();
+    }
+    combinedExclude.insert(combinedExclude.end(), options.excludePatterns.begin(), options.excludePatterns.end());
+
+    Directory* root = buildTree(targetPath, 0, options.maxDepth, combinedExclude);
 
     std::cout << "Directory tree for: " << fs::absolute(targetPath).u8string() << "\n";
     root->print("", true, true);

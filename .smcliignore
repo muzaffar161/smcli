@@ -1,0 +1,16 @@
+# Базовые исключения для smcli
+.git
+node_modules
+obj
+bin
+.env
+.DS_Store
+.vscode
+.idea
+dist
+build
+build/*
+*.o
+*.a
+*.so
+*.exe

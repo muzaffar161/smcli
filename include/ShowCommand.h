@@ -8,6 +8,7 @@
 struct ShowOptions {
     int maxDepth = -1; 
     std::vector<std::string> excludePatterns;
+    bool noIgnore = false;
 };
 
 // Reusable formatting utility

@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <fstream>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -49,4 +51,46 @@ fs::path generate_new_path(const fs::path& destination_path) {
     } while (fs::exists(new_path));
 
     return new_path;
+}
+
+std::vector<std::string> load_ignore_patterns() {
+    std::vector<std::string> patterns;
+    fs::path ignore_file = fs::current_path() / ".smcliignore";
+    
+    if (!fs::exists(ignore_file)) {
+        return patterns;
+    }
+
+    std::ifstream file(ignore_file);
+    std::string line;
+    while (std::getline(file, line)) {
+        // Trim whitespace
+        line.erase(0, line.find_first_not_of(" \t\r\n"));
+        line.erase(line.find_last_not_of(" \t\r\n") + 1);
+
+        if (!line.empty() && line[0] != '#') {
+            patterns.push_back(line);
+        }
+    }
+    return patterns;
+}
+
+bool wildcard_match(const std::string& text, const std::string& pattern) {
+    if (pattern.empty()) return text.empty();
+    if (pattern == "*") return true;
+
+    // Simple prefix check for dir/*
+    if (pattern.size() > 2 && pattern.substr(pattern.size() - 2) == "/*") {
+        std::string prefix = pattern.substr(0, pattern.size() - 2);
+        return text == prefix || (text.size() > prefix.size() && text.substr(0, prefix.size() + 1) == prefix + "/");
+    }
+
+    // Simple extension check for *.ext
+    if (pattern.size() > 2 && pattern.substr(0, 2) == "*.") {
+        std::string ext = pattern.substr(1);
+        if (text.size() < ext.size()) return false;
+        return text.substr(text.size() - ext.size()) == ext;
+    }
+
+    return text == pattern;
 }

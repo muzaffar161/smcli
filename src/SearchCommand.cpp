@@ -1,11 +1,14 @@
 #include "SearchCommand.h"
 #include <iostream>
+#include <fstream>
 #include <filesystem>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <chrono>
 #include "UIUtils.h"
+#include "PathUtils.h"
 
 namespace fs = std::filesystem;
 
@@ -36,6 +39,44 @@ bool SearchCommand::isVideoFile(const std::string& extension) const {
     return videoExtensions.count(extension);
 }
 
+bool SearchCommand::isTextFile(const std::string& extension) const {
+    static const std::set<std::string> textExtensions = {
+        ".txt", ".md", ".cpp", ".h", ".js", ".ts", ".py", ".go", ".c", ".java", ".json", ".xml", ".html", ".css", ".sh", ".yml", ".yaml", ".ini", ".log", ".env", ""
+    };
+    return textExtensions.count(extension);
+}
+
+bool SearchCommand::fileContains(const fs::path& filePath, const std::string& query) const {
+    std::ifstream file(filePath);
+    if (!file.is_open()) return false;
+    
+    std::string line;
+    std::string lowerQuery = query;
+    std::transform(lowerQuery.begin(), lowerQuery.end(), lowerQuery.begin(), ::tolower);
+
+    while (std::getline(file, line)) {
+        std::transform(line.begin(), line.end(), line.begin(), ::tolower);
+        if (line.find(lowerQuery) != std::string::npos) return true;
+    }
+    return false;
+}
+
+uintmax_t parseSize(const std::string& sizeStr) {
+    if (sizeStr.empty()) return 0;
+    std::string numPart;
+    std::string unitPart;
+    for (char c : sizeStr) {
+        if (std::isdigit(c)) numPart += c;
+        else unitPart += c;
+    }
+    if (numPart.empty()) return 0;
+    uintmax_t size = std::stoull(numPart);
+    std::transform(unitPart.begin(), unitPart.end(), unitPart.begin(), ::toupper);
+    if (unitPart == "KB" || unitPart == "K") size *= 1024;
+    else if (unitPart == "MB" || unitPart == "M") size *= 1024 * 1024;
+    else if (unitPart == "GB" || unitPart == "G") size *= 1024ULL * 1024 * 1024;
+    return size;
+}
 
 void printHighlighted(const std::string& text, const std::string& query, const std::string& baseColor) {
     if (query.empty()) {
@@ -62,13 +103,19 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
     if (args.empty()) {
         std::cerr << "Usage: smcli search <query> [--flags]" << std::endl;
         std::cerr << "Flags:" << std::endl;
-        std::cerr << "  -f             : Search for files only" << std::endl;
-        std::cerr << "  -fl            : Search for folders only" << std::endl;
-        std::cerr << "  -img           : Search for image files only" << std::endl;
-        std::cerr << "  -vid           : Search for video files only" << std::endl;
-        std::cerr << "  --exact-name    : Search for exact name match (case-insensitive)" << std::endl;
-        std::cerr << "  --depth <N>     : Limit search to N levels deep" << std::endl;
-        std::cerr << "  --exclude <name>: Exclude files or folders with the given name" << std::endl;
+        std::cerr << "  -f                : Search for files only" << std::endl;
+        std::cerr << "  -fl               : Search for folders only" << std::endl;
+        std::cerr << "  -img              : Search for image files only" << std::endl;
+        std::cerr << "  -vid              : Search for video files only" << std::endl;
+        std::cerr << "  -c, --content     : Search inside file contents" << std::endl;
+        std::cerr << "  --exact-name      : Search for exact name match (case-insensitive)" << std::endl;
+        std::cerr << "  --depth <N>       : Limit search to N levels deep" << std::endl;
+        std::cerr << "  --exclude <name>  : Exclude files or folders with the given name" << std::endl;
+        std::cerr << "  --min-size <size> : Search files larger than size (e.g. 10MB)" << std::endl;
+        std::cerr << "  --max-size <size> : Search files smaller than size" << std::endl;
+        std::cerr << "  --newer-than <N>  : Modified in the last N days" << std::endl;
+        std::cerr << "  --older-than <N>  : Modified more than N days ago" << std::endl;
+        std::cerr << "  --no-ignore       : Search all files, bypassing .smcliignore" << std::endl;
         return;
     }
 
@@ -77,10 +124,25 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
     bool search_folders = true;
     bool search_images = false;
     bool search_videos = false;
+    bool search_content = false;
     bool exact_name_match = false;
     int depth_limit = -1;
     std::vector<std::string> exclude_patterns;
+    bool no_ignore = false;
+    uintmax_t min_size = 0, max_size = 0;
+    int newer_than_days = -1, older_than_days = -1;
 
+    // First pass to check for --no-ignore
+    for (const auto& arg : args) {
+        if (arg == "--no-ignore") {
+            no_ignore = true;
+            break;
+        }
+    }
+
+    if (!no_ignore) {
+        exclude_patterns = load_ignore_patterns();
+    }
 
     for (size_t i = 0; i < args.size(); ++i) {
         if (args[i] == "-f") {
@@ -93,12 +155,25 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
         } else if (args[i] == "-vid") {
             search_videos = true;
             search_folders = false;
+        } else if (args[i] == "-c" || args[i] == "--content") {
+            search_content = true;
+            search_folders = false;
+        } else if (args[i] == "--no-ignore") {
+            continue;
         } else if (args[i] == "--exact-name") {
             exact_name_match = true;
         } else if (args[i] == "--depth" && i + 1 < args.size()) {
             depth_limit = std::stoi(args[++i]);
         } else if (args[i] == "--exclude" && i + 1 < args.size()) {
             exclude_patterns.push_back(args[++i]);
+        } else if (args[i] == "--min-size" && i + 1 < args.size()) {
+            min_size = parseSize(args[++i]);
+        } else if (args[i] == "--max-size" && i + 1 < args.size()) {
+            max_size = parseSize(args[++i]);
+        } else if (args[i] == "--newer-than" && i + 1 < args.size()) {
+            newer_than_days = std::stoi(args[++i]);
+        } else if (args[i] == "--older-than" && i + 1 < args.size()) {
+            older_than_days = std::stoi(args[++i]);
         } else if (query.empty() && args[i][0] != '-') {
             query = args[i];
         }
@@ -112,9 +187,10 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
     std::cout << "Searching for '" << YELLOW << query << RESET << "'..." << std::endl;
     
     std::vector<fs::path> found_items;
-    std::set<std::string> inaccessible_directories;
     Spinner spinner;
     int items_processed = 0;
+
+    auto now = std::chrono::system_clock::now();
 
     auto process_entry = [&](const fs::directory_entry& entry, int current_depth) {
         if (++items_processed % 100 == 0) {
@@ -124,9 +200,25 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
             fs::path p = entry.path();
             std::string item_name = p.filename().u8string();
             
-
             for (const auto& pattern : exclude_patterns) {
-                if (item_name == pattern) return false;
+                if (wildcard_match(item_name, pattern)) return false;
+            }
+
+            // Size filter
+            if (min_size > 0 || max_size > 0) {
+                if (!fs::is_regular_file(entry.status())) return true;
+                uintmax_t fsize = fs::file_size(p);
+                if (min_size > 0 && fsize < min_size) return true;
+                if (max_size > 0 && fsize > max_size) return true;
+            }
+
+            // Date filter
+            if (newer_than_days != -1 || older_than_days != -1) {
+                auto ftime = fs::last_write_time(p);
+                auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(ftime - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
+                auto age_days = std::chrono::duration_cast<std::chrono::hours>(now - sctp).count() / 24;
+                if (newer_than_days != -1 && age_days > newer_than_days) return true;
+                if (older_than_days != -1 && age_days < older_than_days) return true;
             }
 
             std::string lower_item = item_name;
@@ -134,16 +226,25 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
             std::transform(lower_item.begin(), lower_item.end(), lower_item.begin(), ::tolower);
             std::transform(lower_query.begin(), lower_query.end(), lower_query.begin(), ::tolower);
 
-            bool matches = exact_name_match ? (lower_item == lower_query) : (lower_item.find(lower_query) != std::string::npos);
+            bool name_matches = exact_name_match ? (lower_item == lower_query) : (lower_item.find(lower_query) != std::string::npos);
+            bool content_matches = false;
 
-            if (matches) {
+            if (search_content && fs::is_regular_file(entry.status())) {
+                std::string ext = p.extension().u8string();
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                if (isTextFile(ext)) {
+                    content_matches = fileContains(p, query);
+                }
+            }
+
+            if (name_matches || content_matches) {
                 if (fs::is_regular_file(entry.status()) && search_files) {
                     std::string ext = p.extension().u8string();
                     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
                     if ((!search_images || isImageFile(ext)) && (!search_videos || isVideoFile(ext))) {
                         found_items.push_back(p);
                     }
-                } else if (fs::is_directory(entry.status()) && search_folders) {
+                } else if (fs::is_directory(entry.status()) && search_folders && !search_content) {
                     found_items.push_back(p);
                 }
             }
