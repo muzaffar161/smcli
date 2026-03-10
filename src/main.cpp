@@ -27,7 +27,19 @@ void printUsage() {
               << "\n"
               << "Common Options:\n"
               << "  --exclude <name>: Exclude files or dirs (can be used multiple times).\n"
-              << "  --no-ignore    : Show all files, bypassing .smcliignore and global ignore.\n";
+              << "  --no-ignore    : Show all files, bypassing .smcliignore and global ignore.\n"
+              << "Show Options:\n"
+              << "  --depth <N>    : Limit tree display to N levels deep.\n"
+              << "  --exclude <name>: Exclude files or directories with the given name.\n"
+              << "\n"
+              << "Search Options:\n"
+              << "  -f             : Search for files only.\n"
+              << "  -fl            : Search for folders only.\n"
+              << "  -img           : Search for image files only.\n"
+              << "  -vid           : Search for video files only.\n"
+              << "  --exact-name   : Search for exact name match (case-insensitive).\n"
+              << "  --depth <N>    : Limit search to N levels deep.\n"
+              << "  --exclude <name>: Exclude files or folders with the given name.\n";
 }
 
 int main(int argc, char* argv[]) {
