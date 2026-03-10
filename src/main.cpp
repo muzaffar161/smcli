@@ -48,6 +48,13 @@ int main(int argc, char* argv[]) {
     }
 
     std::string command = argv[1];
+    
+    // Handle --help or help command
+    if (command == "help" || command == "--help") {
+        printUsage();
+        return 0;
+    }
+
     std::vector<std::string> args;
     for (int i = 2; i < argc; ++i) {
         if (std::string(argv[i]) == "--help") {
@@ -91,9 +98,6 @@ int main(int argc, char* argv[]) {
     } else if (command == "search" || command == "find") {
         SearchCommand searchCmd;
         searchCmd.execute(args);
-    }
-    else if (command == "help") {
-        printUsage();
     } else {
         std::cerr << "Unknown command: " << command << std::endl;
         printUsage();
