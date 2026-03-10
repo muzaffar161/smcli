@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <filesystem>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -12,6 +13,8 @@
 #include "DUCommand.h"
 #include "PathUtils.h"
 
+namespace fs = std::filesystem;
+
 void printUsage() {
     std::cout << "Usage: smcli <command> [options]\n"
               << "\n"
@@ -22,25 +25,29 @@ void printUsage() {
               << "  move | mv <source> to <dest> [as <name>]     Move/rename a file or directory.\n"
               << "  import | get <source> [as <name>]            Import to current location.\n"
               << "  search | find <query> [options]              Search for files and folders.\n"
-              << "  --exclude-add-global <pattern>               Add pattern to global ignore file.\n"
+              << "  --exclude-add-global <pattern>               Add pattern to global ignore file (~/.smcliignore-global).\n"
+              << "  --ignore-list                                List all active ignore patterns.\n"
               << "  help                                         Show this help message.\n"
               << "\n"
               << "Common Options:\n"
               << "  --exclude <name> : Exclude specific file/dir (can be used multiple times).\n"
               << "  --no-ignore     : Bypass all .smcliignore and global ignore rules.\n"
-              << "  --depth <N>    : Limit search to N levels deep.\n" 
-              << "  --exact-name   : Search for exact name match (case-insensitive).\n"
-              << "  --exclude-add-global <name> : Exclude specific file/dir (can be used multiple times).\n"
-              << "\n"
+              << "  --depth <N>    : Limit tree display to N levels deep.\n"
               << "Search Options:\n"
-              << "  -c, --content   : Search inside file contents.\n"
-              << "  -f / -fl        : Search files only / folders only.\n"
-              << "  -img / -vid     : Search images only / videos only.\n"
-              << "  --min-size <S>  : Minimum file size (e.g. 10MB).\n"
-              << "  --max-size <S>  : Maximum file size.\n"
+              << "  -f             : Search for files only.\n"
+              << "  -fl            : Search for folders only.\n"
+              << "  -img           : Search for image files only.\n"
+              << "  -vid           : Search for video files only.\n"
+              << "  --exact-name   : Search for exact name match (case-insensitive).\n"
+              << "  --depth <N>    : Limit search to N levels deep.\n"
+              << "  --min-size <S> : Minimum file size (e.g. 10MB).\n"
+              << "  --max-size <S> : Maximum file size.\n"
               << "  --newer-than <N>: Modified in the last N days.\n"
-              << "  --older-than <N>: Modified more than N days ago.\n";
+              << "  --older-than <N>: Modified more than N days ago.\n"
+              << "  --content      : Search inside file contents.\n"
+              << "  --exclude <name>: Exclude files or folders with the given name.\n";
 }
+
 
 int main(int argc, char* argv[]) {
 #ifdef _WIN32
@@ -54,13 +61,29 @@ int main(int argc, char* argv[]) {
 
     std::string command = argv[1];
     
-    // Check for global ignore command first
     if (command == "--exclude-add-global") {
         if (argc < 3) {
-            std::cerr << "Error: Pattern required (e.g. smcli --exclude-add-global \"*.log\")" << std::endl;
+            std::cerr << "Error: Pattern required." << std::endl;
             return 1;
         }
         add_global_ignore_pattern(argv[2]);
+        return 0;
+    }
+
+    if (command == "--ignore-list") {
+        auto patterns = load_ignore_patterns();
+        std::cout << "Active ignore patterns (" << patterns.size() << "):" << std::endl;
+        for (const auto& p : patterns) {
+            std::cout << "  - " << p << std::endl;
+        }
+#ifdef _WIN32
+        const char* home = std::getenv("USERPROFILE");
+#else
+        const char* home = std::getenv("HOME");
+#endif
+        if (home) {
+            std::cout << "\nGlobal ignore file location: " << (fs::path(home) / ".smcliignore-global").u8string() << std::endl;
+        }
         return 0;
     }
 

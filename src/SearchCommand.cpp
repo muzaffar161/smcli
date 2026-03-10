@@ -102,20 +102,6 @@ void printHighlighted(const std::string& text, const std::string& query, const s
 void SearchCommand::execute(const std::vector<std::string>& args) const {
     if (args.empty()) {
         std::cerr << "Usage: smcli search <query> [options]" << std::endl;
-        std::cerr << "Options:" << std::endl;
-        std::cerr << "  -f                : Search for files only" << std::endl;
-        std::cerr << "  -fl               : Search for folders only" << std::endl;
-        std::cerr << "  -img              : Search for image files only" << std::endl;
-        std::cerr << "  -vid              : Search for video files only" << std::endl;
-        std::cerr << "  -c, --content     : Search inside file contents" << std::endl;
-        std::cerr << "  --exact-name      : Exact name match (case-insensitive)" << std::endl;
-        std::cerr << "  --depth <N>       : Limit search to N levels deep" << std::endl;
-        std::cerr << "  --exclude <name>  : Exclude specific name (can be used multiple times)" << std::endl;
-        std::cerr << "  --min-size <size> : Files larger than size (e.g. 10MB)" << std::endl;
-        std::cerr << "  --max-size <size> : Files smaller than size" << std::endl;
-        std::cerr << "  --newer-than <N>  : Modified in the last N days" << std::endl;
-        std::cerr << "  --older-than <N>  : Modified more than N days ago" << std::endl;
-        std::cerr << "  --no-ignore       : Bypass all ignore files" << std::endl;
         return;
     }
 
@@ -191,7 +177,14 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
 
     auto now = std::chrono::system_clock::now();
 
-    auto process_entry = [&](const fs::directory_entry& entry, int current_depth) {
+    auto is_ignored = [&](const std::string& name) {
+        for (const auto& pattern : exclude_patterns) {
+            if (wildcard_match(name, pattern)) return true;
+        }
+        return false;
+    };
+
+    auto process_entry = [&](const fs::directory_entry& entry) {
         if (++items_processed % 100 == 0) {
             spinner.next("Scanning... [" + std::to_string(found_items.size()) + " matches found]");
         }
@@ -199,10 +192,10 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
             fs::path p = entry.path();
             std::string item_name = p.filename().u8string();
             
-            for (const auto& pattern : exclude_patterns) {
-                if (wildcard_match(item_name, pattern)) return false;
-            }
+            // 1. Игнорируем полностью, если в списке исключений
+            if (is_ignored(item_name)) return false;
 
+            // 2. Фильтры размера
             if (min_size > 0 || max_size > 0) {
                 if (!fs::is_regular_file(entry.status())) return true;
                 uintmax_t fsize = fs::file_size(p);
@@ -210,6 +203,7 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
                 if (max_size > 0 && fsize > max_size) return true;
             }
 
+            // 3. Фильтры даты
             if (newer_than_days != -1 || older_than_days != -1) {
                 auto ftime = fs::last_write_time(p);
                 auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(ftime - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
@@ -252,7 +246,7 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
     try {
         if (depth_limit == 0) {
             for (const auto& entry : fs::directory_iterator(fs::current_path(), fs::directory_options::skip_permission_denied)) {
-                (void)process_entry(entry, 0);
+                (void)process_entry(entry);
             }
         } else {
             for (fs::recursive_directory_iterator it(fs::current_path(), fs::directory_options::skip_permission_denied), end; it != end; ++it) {
@@ -260,7 +254,9 @@ void SearchCommand::execute(const std::vector<std::string>& args) const {
                     it.disable_recursion_pending();
                     continue;
                 }
-                if (!process_entry(*it, it.depth())) it.disable_recursion_pending();
+                if (!process_entry(*it)) {
+                    it.disable_recursion_pending();
+                }
             }
         }
         spinner.clear();
