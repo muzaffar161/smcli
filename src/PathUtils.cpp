@@ -4,9 +4,39 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
+
+#ifdef _WIN32
+#include <windows.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#else
+#include <unistd.h>
+#endif
 
 namespace fs = std::filesystem;
 
+
+fs::path get_binary_path() {
+    char buffer[1024];
+    uint32_t size = sizeof(buffer);
+#ifdef _WIN32
+    GetModuleFileNameA(NULL, buffer, size);
+    return fs::path(buffer).parent_path();
+#elif defined(__APPLE__)
+    if (_NSGetExecutablePath(buffer, &size) == 0) {
+        return fs::path(buffer).parent_path();
+    }
+    return fs::current_path();
+#else
+    ssize_t len = readlink("/proc/self/exe", buffer, size - 1);
+    if (len != -1) {
+        buffer[len] = '\0';
+        return fs::path(buffer).parent_path();
+    }
+    return fs::current_path();
+#endif
+}
 
 fs::path generate_new_path(const fs::path& destination_path) {
     if (!fs::exists(destination_path)) {
@@ -53,21 +83,15 @@ fs::path generate_new_path(const fs::path& destination_path) {
     return new_path;
 }
 
-std::vector<std::string> load_ignore_patterns() {
+std::vector<std::string> load_from_file(const fs::path& p) {
     std::vector<std::string> patterns;
-    fs::path ignore_file = fs::current_path() / ".smcliignore";
+    if (!fs::exists(p)) return patterns;
     
-    if (!fs::exists(ignore_file)) {
-        return patterns;
-    }
-
-    std::ifstream file(ignore_file);
+    std::ifstream file(p);
     std::string line;
     while (std::getline(file, line)) {
-        // Trim whitespace
         line.erase(0, line.find_first_not_of(" \t\r\n"));
         line.erase(line.find_last_not_of(" \t\r\n") + 1);
-
         if (!line.empty() && line[0] != '#') {
             patterns.push_back(line);
         }
@@ -75,22 +99,94 @@ std::vector<std::string> load_ignore_patterns() {
     return patterns;
 }
 
+void ensure_global_ignore_exists(const fs::path& p) {
+    if (fs::exists(p)) return;
+    std::ofstream file(p);
+    file << "# SmCLI Global Ignore Patterns\n"
+         << ".git\nnode_modules\nobj\nbin\n.DS_Store\n.env\n.vscode\n.idea\ndist\nbuild\n*.o\n*.exe\n*.so\n*.a\n";
+    file.close();
+}
+
+std::vector<std::string> load_ignore_patterns() {
+    std::vector<std::string> patterns;
+    
+    // 1. Load Global Ignore (next to binary)
+    fs::path global_ignore = get_binary_path() / ".smcliignore-global";
+    ensure_global_ignore_exists(global_ignore);
+    auto global_patterns = load_from_file(global_ignore);
+    patterns.insert(patterns.end(), global_patterns.begin(), global_patterns.end());
+
+    // 2. Load Local Ignore (recursive search)
+    fs::path current = fs::current_path();
+    while (true) {
+        fs::path p = current / ".smcliignore";
+        if (fs::exists(p)) {
+            auto local_patterns = load_from_file(p);
+            patterns.insert(patterns.end(), local_patterns.begin(), local_patterns.end());
+            break;
+        }
+        if (current.has_parent_path() && current != current.root_path()) {
+            current = current.parent_path();
+        } else {
+            break;
+        }
+    }
+    
+    // Remove duplicates
+    std::sort(patterns.begin(), patterns.end());
+    patterns.erase(std::unique(patterns.begin(), patterns.end()), patterns.end());
+    
+    return patterns;
+}
+
+void add_global_ignore_pattern(const std::string& pattern) {
+    fs::path global_ignore = get_binary_path() / ".smcliignore-global";
+    ensure_global_ignore_exists(global_ignore);
+    
+    // Check if pattern already exists
+    auto patterns = load_from_file(global_ignore);
+    if (std::find(patterns.begin(), patterns.end(), pattern) != patterns.end()) {
+        std::cout << "Pattern '" << pattern << "' is already in global ignore." << std::endl;
+        return;
+    }
+
+    std::ofstream file(global_ignore, std::ios_base::app);
+    file << pattern << "\n";
+    file.close();
+    std::cout << "Added '" << pattern << "' to global ignore (" << global_ignore.u8string() << ")." << std::endl;
+}
+
 bool wildcard_match(const std::string& text, const std::string& pattern) {
     if (pattern.empty()) return text.empty();
-    if (pattern == "*") return true;
-
-    // Simple prefix check for dir/*
-    if (pattern.size() > 2 && pattern.substr(pattern.size() - 2) == "/*") {
-        std::string prefix = pattern.substr(0, pattern.size() - 2);
-        return text == prefix || (text.size() > prefix.size() && text.substr(0, prefix.size() + 1) == prefix + "/");
+    
+    std::string norm_pattern = pattern;
+    if (norm_pattern.size() > 1 && (norm_pattern.back() == '/' || norm_pattern.back() == '\\')) {
+        norm_pattern.pop_back();
     }
 
-    // Simple extension check for *.ext
-    if (pattern.size() > 2 && pattern.substr(0, 2) == "*.") {
-        std::string ext = pattern.substr(1);
+    if (norm_pattern == "*") return true;
+
+    if (norm_pattern.size() > 2 && norm_pattern.substr(norm_pattern.size() - 2) == "/*") {
+        std::string prefix = norm_pattern.substr(0, norm_pattern.size() - 2);
+        return text == prefix;
+    }
+
+    if (norm_pattern.size() > 2 && norm_pattern.substr(0, 2) == "*.") {
+        std::string ext = norm_pattern.substr(1);
         if (text.size() < ext.size()) return false;
-        return text.substr(text.size() - ext.size()) == ext;
+        
+        std::string lower_text = text;
+        std::string lower_ext = ext;
+        std::transform(lower_text.begin(), lower_text.end(), lower_text.begin(), ::tolower);
+        std::transform(lower_ext.begin(), lower_ext.end(), lower_ext.begin(), ::tolower);
+        
+        return lower_text.substr(lower_text.size() - lower_ext.size()) == lower_ext;
     }
 
-    return text == pattern;
+    std::string lower_text = text;
+    std::string lower_pattern = norm_pattern;
+    std::transform(lower_text.begin(), lower_text.end(), lower_text.begin(), ::tolower);
+    std::transform(lower_pattern.begin(), lower_pattern.end(), lower_pattern.begin(), ::tolower);
+
+    return lower_text == lower_pattern;
 }

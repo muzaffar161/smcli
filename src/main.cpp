@@ -10,38 +10,24 @@
 #include "ImportCommand.h"
 #include "SearchCommand.h"
 #include "DUCommand.h"
+#include "PathUtils.h"
 
 void printUsage() {
     std::cout << "Usage: smcli <command> [options]\n"
               << "\n"
               << "Commands:\n"
-              << "  show [path] [--depth <N>] [--exclude <name>] [--no-ignore]  Display a tree map of a directory.\n"
+              << "  show [path] [--depth <N>] [--exclude <name>] [--no-ignore]  Display a tree map.\n"
               << "  du [path]                                     Show disk usage with progress bars.\n"
               << "  copy | cp <source> to <dest> [as <name>]     Copy a file or directory.\n"
               << "  move | mv <source> to <dest> [as <name>]     Move/rename a file or directory.\n"
-              << "  import | get <source> [as <name>]            Import a file or directory to current location.\n"
+              << "  import | get <source> [as <name>]            Import to current location.\n"
               << "  search | find <query> [options]              Search for files and folders.\n"
+              << "  --exclude-add-global <pattern>               Add pattern to global ignore file.\n"
               << "  help                                         Show this help message.\n"
               << "\n"
-              << "Show Options:\n"
-              << "  --depth <N>    : Limit tree display to N levels deep.\n"
-              << "  --exclude <name>: Exclude files or directories with the given name.\n"
-              << "  --no-ignore    : Show all files, bypassing .smcliignore.\n"
-              << "\n"
-              << "Search Options:\n"
-              << "  -f             : Search for files only.\n"
-              << "  -fl            : Search for folders only.\n"
-              << "  -img           : Search for image files only.\n"
-              << "  -vid           : Search for video files only.\n"
-              << "  -c, --content  : Search inside file contents.\n"
-              << "  --exact-name   : Search for exact name match (case-insensitive).\n"
-              << "  --depth <N>    : Limit search to N levels deep.\n"
-              << "  --exclude <name>: Exclude files or folders with the given name.\n"
-              << "  --min-size <S> : Search files larger than S (e.g. 10MB).\n"
-              << "  --max-size <S> : Search files smaller than S.\n"
-              << "  --newer-than <N>: Modified in the last N days.\n"
-              << "  --older-than <N>: Modified more than N days ago.\n"
-              << "  --no-ignore    : Search all files, bypassing .smcliignore.\n";
+              << "Common Options:\n"
+              << "  --exclude <name>: Exclude files or dirs (can be used multiple times).\n"
+              << "  --no-ignore    : Show all files, bypassing .smcliignore and global ignore.\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -56,7 +42,16 @@ int main(int argc, char* argv[]) {
 
     std::string command = argv[1];
     
-    // Handle --help or help command
+    // Handle global ignore addition
+    if (command == "--exclude-add-global") {
+        if (argc < 3) {
+            std::cerr << "Error: Pattern required." << std::endl;
+            return 1;
+        }
+        add_global_ignore_pattern(argv[2]);
+        return 0;
+    }
+
     if (command == "help" || command == "--help") {
         printUsage();
         return 0;
@@ -64,10 +59,6 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::string> args;
     for (int i = 2; i < argc; ++i) {
-        if (std::string(argv[i]) == "--help") {
-            printUsage();
-            return 0;
-        }
         args.push_back(argv[i]);
     }
 
@@ -78,11 +69,7 @@ int main(int argc, char* argv[]) {
 
         for (size_t i = 0; i < args.size(); ++i) {
             if (args[i] == "--depth" && i + 1 < args.size()) {
-                try {
-                    options.maxDepth = std::stoi(args[++i]);
-                } catch (...) {
-                    std::cerr << "Invalid depth: " << args[i] << std::endl;
-                }
+                try { options.maxDepth = std::stoi(args[++i]); } catch (...) {}
             } else if (args[i] == "--exclude" && i + 1 < args.size()) {
                 options.excludePatterns.push_back(args[++i]);
             } else if (args[i] == "--no-ignore") {
